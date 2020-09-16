@@ -1,7 +1,6 @@
 package me.skiincraft.mal;
 
 import java.io.IOException;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -155,7 +154,7 @@ public class MyAnimeList {
 							v += 300;
 						}
 
-						return animelist = new AnimeListImpl(lista, ListStatus.ALL, name, mal);
+						return animelist = new AnimeListImpl(lista, status, name, mal);
 					}
 				} catch (IOException e) {
 					throw new SearchException("This profile you searched for doesn't exist, or it wasn't spelled correctly.");
@@ -165,11 +164,4 @@ public class MyAnimeList {
 			}
 		};
 	}
-
-	public static void main(String[] args) throws IOException, ParseException {
-		AnimeList profile = new MyAnimeList().getAnimeList("cris_sknzzz", ListStatus.ALL).get();
-		profile.getAnimelist().forEach( o -> System.out.println(o));
-	}
-
-
 }
