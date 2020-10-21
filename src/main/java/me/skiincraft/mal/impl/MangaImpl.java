@@ -25,9 +25,9 @@ import me.skiincraft.mal.entity.requests.CharactersAnime;
 
 public class MangaImpl implements Manga {
 	
-	private Document doc;
+	private final Document doc;
+	private final MyAnimeList mal;
 	private Request<List<CharacterShort>> request;
-	private MyAnimeList mal;
 	
 	public MangaImpl(Document document, MyAnimeList mal) {
 		this.doc = document;
@@ -75,7 +75,7 @@ public class MangaImpl implements Manga {
 	public MangaInformation getInformation() {
 		Elements eles = doc.select("#content > table > tbody > tr > td.borderClass > div");
 		String synopsis = doc.select("#content > table > tbody > tr > td:nth-child(2) > div.js-scrollfix-bottom-rel > table > tbody > tr:nth-child(1) > td > p").text();
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder builder = new StringBuilder();
 		int i = 1;
 		for (Element e : eles.get(0).getElementsByTag("div")) {
  			if (e.text().length() == 0) {
@@ -86,16 +86,16 @@ public class MangaImpl implements Manga {
  					continue;
  				}
  				if (e.select("span").toString().contains("itemprop")) {
- 	 				buffer.append(e.select("span").text()+ "\n");
+ 	 				builder.append(e.select("span").text()).append("\n");
  	 				continue;
  				}
  				if (e.select("a").toString().contains("/people/")) {
  					int o = 1;
- 					buffer.append("Authors: ");
+ 					builder.append("Authors: ");
  					for (Element authors : e.select("a")) {
- 						buffer.append(authors.text() + ";");
+ 						builder.append(authors.text()).append(";");
  						if (o == e.select("a").size()) {
- 							buffer.append("\n");
+ 							builder.append("\n");
  						}
  						o++;
  					}
@@ -103,20 +103,20 @@ public class MangaImpl implements Manga {
  					
  				}
  				
- 				buffer.append(e.text() + "\n");
+ 				builder.append(e.text()).append("\n");
  			} else {
  			i++;
  			}
 		}
 		boolean guard = false;
-		Scanner scanner = new Scanner(buffer.toString());
+		Scanner scanner = new Scanner(builder.toString());
 		List<String> tables = new ArrayList<>();
 		while (scanner.hasNextLine()) {
 			String next = scanner.nextLine();
 			if (next.contains("Type:")) {
 				guard = true;
 			}
-			if (guard == false) {
+			if (!guard) {
 				continue;
 			}
 			System.out.println(next);
@@ -129,10 +129,7 @@ public class MangaImpl implements Manga {
 				Status.getStatus(tables.get(3)),
 				tables.get(4), Genre.getGenres(tables.get(5)), Arrays.asList(tables.get(6).split(";")));
 	}
-	
-	private String rAll(String string) {
-		return string.replaceAll("\\D+", "");
-	}
+
 	private int parseAll(String string) {
 		String replaced = string.replaceAll("\\D+", "");
 		return (replaced.length() == 0) ? 0 : Integer.parseInt(replaced);
@@ -143,14 +140,13 @@ public class MangaImpl implements Manga {
 	}
 
 	public String getDefaultAvatar() {
-		Element ele = doc.selectFirst("#content > table > tbody > tr >"
-				+ " td.borderClass > div > div:nth-child(1) > a > img");
+		Element ele = doc.getElementsByClass("borderClass").select("img").get(0);
 		return ele.attr("data-src");
 	}
 
 	public long getId() {
 		String str = doc.location().substring(doc.location().indexOf("/manga/")).substring("/manga/".length());
-		int index = (str.indexOf("/") == -1) ? 0 : str.indexOf("/");
+		int index = (!str.contains("/")) ? 0 : str.indexOf("/");
 		if (index != 0) {
 			str = str.substring(0, index);
 		}
@@ -158,36 +154,37 @@ public class MangaImpl implements Manga {
 	}
 
 	public float getScore() {
-		Element ele = doc.selectFirst("#content > table > tbody > tr > td:nth-child(2) > div.js-scrollfix-bottom-rel > table > tbody > tr:nth-child(1) > td > div.pb24 > div.di-t.w100.mt12 > div > div.stats-block.po-r.clearfix > div.fl-l.score > div");
-		
-		String number = ele.text().replaceAll("N/A", "0");
-		return Float.parseFloat(number);
+		for (int i = 1; i <= 10; i++) {
+			Elements elements = doc.getElementsByClass("score-label score-" + i);
+			if (elements.size() != 0) {
+				return Float.parseFloat(elements.get(0).text());
+			}
+		}
+		return 0;
 	}
 
 	public long getTotalVotes() {
-		Element ele = doc.selectFirst("#content > table > tbody > tr > td:nth-child(2) > div.js-scrollfix-bottom-rel > table > tbody > tr:nth-child(1) > td > div.pb24 > div.di-t.w100.mt12 > div > div.stats-block.po-r.clearfix > div.fl-l.score");
+		Element ele = doc.getElementsByClass("fl-l score").get(0);
 		String number = ele.attr("data-user").replaceAll("\\D+", "");
 		return Long.parseLong((number.length() == 0) ? "0" : number);
 	}
 
 	public long getRanked() {
-		Element ele = doc.selectFirst(
-				"#content > table > tbody > tr > td:nth-child(2) > div.js-scrollfix-bottom-rel > table > tbody > tr:nth-child(1) > td > div.pb24 > div.di-t.w100.mt12 > div > div.stats-block.po-r.clearfix > div.po-a.di-ib.ml12.pl20.pt8 > span.numbers.ranked > strong");
-		
+		Element ele = doc.getElementsByClass("numbers ranked").get(0);
 		return (ele.text().contains("N/A") || ele.text().replaceAll("\\D+", "").length() == 0) ? 0
-				: Long.parseLong(rAll(ele.text()));
+				: Long.parseLong(ele.text().replaceAll("\\D+", ""));
 	}
 
 	public long getPopularity() {
-		Element ele = doc.selectFirst("#content > table > tbody > tr > td:nth-child(2) > div.js-scrollfix-bottom-rel > table > tbody > tr:nth-child(1) > td > div.pb24 > div.di-t.w100.mt12 > div > div.stats-block.po-r.clearfix > div.po-a.di-ib.ml12.pl20.pt8 > span.numbers.popularity > strong");
-		
-		return Long.parseLong(ele.text().replaceAll("\\D+", ""));
+		Element ele = doc.getElementsByClass("numbers popularity").get(0);
+		return (ele.text().contains("N/A") || ele.text().replaceAll("\\D+", "").length() == 0) ? 0
+				: Long.parseLong(ele.text().replaceAll("\\D+", ""));
 	}
 
 	public long getMembers() {
-		Element ele = doc.selectFirst("#content > table > tbody > tr > td:nth-child(2) > div.js-scrollfix-bottom-rel > table > tbody > tr:nth-child(1) > td > div.pb24 > div.di-t.w100.mt12 > div > div.stats-block.po-r.clearfix > div.po-a.di-ib.ml12.pl20.pt8 > span.numbers.members > strong");
-		
-		return Long.parseLong(ele.text().replaceAll("\\D+", ""));
+		Element ele = doc.getElementsByClass("numbers members").get(0);
+		return (ele.text().contains("N/A") || ele.text().replaceAll("\\D+", "").length() == 0) ? 0
+				: Long.parseLong(ele.text().replaceAll("\\D+", ""));
 	}
 
 	public Request<List<CharacterShort>> getCharacters() {

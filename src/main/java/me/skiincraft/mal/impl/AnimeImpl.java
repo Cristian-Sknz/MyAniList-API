@@ -1,33 +1,27 @@
 package me.skiincraft.mal.impl;
 
+import me.skiincraft.mal.MyAnimeList;
+import me.skiincraft.mal.api.Request;
+import me.skiincraft.mal.entity.anime.Anime;
+import me.skiincraft.mal.entity.anime.AnimeInformation;
+import me.skiincraft.mal.entity.characters.CharacterShort;
+import me.skiincraft.mal.entity.objects.*;
+import me.skiincraft.mal.entity.requests.CharactersAnime;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
-import me.skiincraft.mal.MyAnimeList;
-import me.skiincraft.mal.api.Request;
-import me.skiincraft.mal.entity.anime.Anime;
-import me.skiincraft.mal.entity.anime.AnimeInformation;
-import me.skiincraft.mal.entity.characters.CharacterShort;
-import me.skiincraft.mal.entity.objects.Genre;
-import me.skiincraft.mal.entity.objects.Source;
-import me.skiincraft.mal.entity.objects.Statistics;
-import me.skiincraft.mal.entity.objects.Status;
-import me.skiincraft.mal.entity.objects.Titles;
-import me.skiincraft.mal.entity.objects.MediaType;
-import me.skiincraft.mal.entity.requests.CharactersAnime;
-
 public class AnimeImpl implements Anime {
 	
-	private Document doc;
-	private MyAnimeList mal;
+	private final Document doc;
+	private final MyAnimeList mal;
 	private Request<List<CharacterShort>> request;
 	
 	public AnimeImpl(Document document, MyAnimeList mal) {
@@ -107,7 +101,7 @@ public class AnimeImpl implements Anime {
 	public AnimeInformation getInformation() {
 		Elements eles = doc.select("#content > table > tbody > tr > td.borderClass > div");
 		String synopsis = doc.select("#content > table > tbody > tr > td:nth-child(2) > div.js-scrollfix-bottom-rel > table > tbody > tr:nth-child(1) > td > p").text();
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder builder = new StringBuilder();
 		int i = 1;
 		for (Element e : eles.get(0).getElementsByTag("div")) {
  			if (e.text().length() == 0) {
@@ -118,23 +112,23 @@ public class AnimeImpl implements Anime {
  					continue;
  				}
  				if (e.select("span").toString().contains("itemprop")) {
- 	 				buffer.append(e.select("span").text()+ "\n");
+ 	 				builder.append(e.select("span").text()).append("\n");
  	 				continue;
  				}
- 				buffer.append(e.text() + "\n");
+ 				builder.append(e.text()).append("\n");
  			} else {
  			i++;
  			}
 		}
 		boolean guard = false;
-		Scanner scanner = new Scanner(buffer.toString());
+		Scanner scanner = new Scanner(builder.toString());
 		List<String> tables = new ArrayList<>();
 		while (scanner.hasNextLine()) {
 			String next = scanner.nextLine();
 			if (next.contains("Type:")) {
 				guard = true;
 			}
-			if (guard == false) {
+			if (!guard) {
 				continue;
 			}
 			tables.add(next.split(":")[1].substring(1));
@@ -162,14 +156,13 @@ public class AnimeImpl implements Anime {
 	}
 
 	public String getDefaultAvatar() {
-		Element ele = doc.selectFirst("#content > table > tbody > tr >"
-				+ " td.borderClass > div > div:nth-child(1) > a > img");
+		Element ele = doc.getElementsByClass("borderClass").select("img").get(0);
 		return ele.attr("data-src");
 	}
 
 	public long getId() {
 		String str = doc.location().substring(doc.location().indexOf("/anime/")).substring("/anime/".length());
-		int index = (str.indexOf("/") == -1) ? 0 : str.indexOf("/");
+		int index = (!str.contains("/")) ? 0 : str.indexOf("/");
 		if (index != 0) {
 			str = str.substring(0, index);
 		}
@@ -177,56 +170,37 @@ public class AnimeImpl implements Anime {
 	}
 
 	public float getScore() {
-		Element ele = doc.selectFirst("#content > table > tbody > tr > td:nth-child(2) >"
-				+ " div.js-scrollfix-bottom-rel > table > tbody > tr:nth-child(1) > td >"
-				+ " div.pb16 > div.di-t.w100.mt12 > div.anime-detail-header-stats.di-tc.va-t >"
-				+ " div.stats-block.po-r.clearfix > div.fl-l.score > div");
-		
-		String number = ele.text().replaceAll("N/A", "0");
-		return Float.parseFloat(number);
+		for (int i = 1; i <= 10; i++) {
+			Elements elements = doc.getElementsByClass("score-label score-" + i);
+			if (elements.size() != 0) {
+				return Float.parseFloat(elements.get(0).text());
+			}
+		}
+		return 0;
 	}
 
 	public long getTotalVotes() {
-		Element ele = doc.selectFirst("#content > table > tbody > tr >"
-				+ " td:nth-child(2) > div.js-scrollfix-bottom-rel >"
-				+ " table > tbody > tr:nth-child(1) > td > div.pb16 >"
-				+ " div.di-t.w100.mt12 > div.anime-detail-header-stats.di-tc.va-t >"
-				+ " div.stats-block.po-r.clearfix > div.fl-l.score");
+		Element ele = doc.getElementsByClass("fl-l score").get(0);
 		String number = ele.attr("data-user").replaceAll("\\D+", "");
 		return Long.parseLong((number.length() == 0) ? "0" : number);
 	}
 
 	public long getRanked() {
-		Element ele = doc.selectFirst(
-				"#content > table > tbody > tr > td:nth-child(2) >"
-				+ " div.js-scrollfix-bottom-rel > table > tbody >"
-				+ " tr:nth-child(1) > td > div.pb16 > div.di-t.w100.mt12 >"
-				+ " div.anime-detail-header-stats.di-tc.va-t >"
-				+ " div.stats-block.po-r.clearfix > div.fl-l.score > div");
-		
+		Element ele = doc.getElementsByClass("numbers ranked").get(0);
 		return (ele.text().contains("N/A") || ele.text().replaceAll("\\D+", "").length() == 0) ? 0
-				: Long.parseLong(ele.text());
+				: Long.parseLong(ele.text().replaceAll("\\D+", ""));
 	}
 
 	public long getPopularity() {
-		Element ele = doc.selectFirst("#content > table > tbody > tr > td:nth-child(2) >"
-				+ " div.js-scrollfix-bottom-rel > table > tbody > tr:nth-child(1) >"
-				+ " td > div.pb16 > div.di-t.w100.mt12 > div.anime-detail-header-stats.di-tc.va-t >"
-				+ " div.stats-block.po-r.clearfix > div.di-ib.ml12.pl20.pt8 >"
-				+ " span.numbers.popularity > strong");
-		
-		return Long.parseLong(ele.text().replaceAll("\\D+", ""));
+		Element ele = doc.getElementsByClass("numbers popularity").get(0);
+		return (ele.text().contains("N/A") || ele.text().replaceAll("\\D+", "").length() == 0) ? 0
+				: Long.parseLong(ele.text().replaceAll("\\D+", ""));
 	}
 
 	public long getMembers() {
-		Element ele = doc.selectFirst("#content > table > tbody > tr >"
-				+ " td:nth-child(2) > div.js-scrollfix-bottom-rel > table >"
-				+ " tbody > tr:nth-child(1) > td > div.pb16 > div.di-t.w100.mt12 >"
-				+ " div.anime-detail-header-stats.di-tc.va-t >"
-				+ " div.stats-block.po-r.clearfix > div.di-ib.ml12.pl20.pt8 >"
-				+ " span.numbers.members > strong");
-		
-		return Long.parseLong(ele.text().replaceAll("\\D+", ""));
+		Element ele = doc.getElementsByClass("numbers members").get(0);
+		return (ele.text().contains("N/A") || ele.text().replaceAll("\\D+", "").length() == 0) ? 0
+				: Long.parseLong(ele.text().replaceAll("\\D+", ""));
 	}
 
 	public Request<List<CharacterShort>> getCharacters() {
