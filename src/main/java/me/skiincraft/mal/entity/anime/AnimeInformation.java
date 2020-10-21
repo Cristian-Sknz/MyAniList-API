@@ -6,6 +6,7 @@ import me.skiincraft.mal.entity.objects.Genre;
 import me.skiincraft.mal.entity.objects.Source;
 import me.skiincraft.mal.entity.objects.Status;
 import me.skiincraft.mal.entity.objects.MediaType;
+import me.skiincraft.mal.util.SimpleUtil;
 
 public class AnimeInformation {
 	
@@ -55,7 +56,7 @@ public class AnimeInformation {
 		return status;
 	}
 	public String getAired() {
-		return aired;
+		return SimpleUtil.convertAired(aired);
 	}
 	public String getPremiered() {
 		return premiered;

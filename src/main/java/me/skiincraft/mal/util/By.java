@@ -5,11 +5,11 @@ public class By {
 	private long id;
 	private String search;
 	
-	public By(String search) {
+	private By(String search) {
 		this.search = search;
 	}
 	
-	public By(long id) {
+	private By(long id) {
 		this.id = id;
 	}
 	
