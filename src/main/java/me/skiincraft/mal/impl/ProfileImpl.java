@@ -1,8 +1,10 @@
 package me.skiincraft.mal.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import me.skiincraft.mal.entity.people.WatchingStatus;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -38,6 +40,12 @@ public class ProfileImpl implements Profile {
 		return document.getElementsByClass("user-profile").get(0).selectFirst("img").attr("data-src");
 	}
 
+	public WatchingStatus containsStatus(String string){
+		return Arrays.stream(WatchingStatus.values())
+				.filter(watchingStatus -> string.toLowerCase().contains(watchingStatus.getName().toLowerCase()))
+				.findFirst().orElse(WatchingStatus.Watching);
+	}
+
 	public AnimeUpdate getAnimeUpdates() {
 		Elements elements = document.getElementsByClass("updates anime").get(0).getElementsByClass("data");
 		UpdatedAnime[] animes = new UpdatedAnime[elements.size()];
@@ -46,8 +54,10 @@ public class ProfileImpl implements Profile {
 			Element e = element.selectFirst("a");
 			UpdatedAnime anime = new UpdatedAnime(e.text(),
 					getId("/anime/", e.attr("href")),
-					Integer.parseInt(element.select("span").get(2).text()),
+					Integer.parseInt((element.select("span").size() <= 2) ? "0" : element.select("span").get(2).text()),
+					containsStatus(element.text()),
 					mal);
+
 			animes[i] = anime;
 			i++;
 		}
@@ -56,7 +66,7 @@ public class ProfileImpl implements Profile {
 	
 	private static long getId(String substring, String url) {
 		String str = url.substring(url.indexOf(substring)).substring(substring.length());
-		int index = (str.indexOf("/") == -1) ? 0 : str.indexOf("/");
+		int index = (!str.contains("/")) ? 0 : str.indexOf("/");
 		if (index != 0) {
 			str = str.substring(0, index);
 		}
@@ -71,7 +81,7 @@ public class ProfileImpl implements Profile {
 			Element e = element.selectFirst("a");
 			UpdatedManga anime = new UpdatedManga(e.text(),
 					getId("/manga/", e.attr("href")),
-					Integer.parseInt(element.select("span").get(2).text()),
+					Integer.parseInt((element.select("span").size() <= 2) ? "0" : element.select("span").get(2).text()),
 					mal);
 			animes[i] = anime;
 			i++;
@@ -106,7 +116,7 @@ public class ProfileImpl implements Profile {
 			}
 		}
 		
-		return stats.toArray(new Number[stats.size()]);
+		return stats.toArray(new Number[0]);
 	}
 
 	public MangaStatus getMangaStatus() {
@@ -137,7 +147,7 @@ public class ProfileImpl implements Profile {
 			}
 		}
 		
-		return uservalues = stats.toArray(new Number[stats.size()]);
+		return uservalues = stats.toArray(new Number[0]);
 	}
 
 	public long getForumPostsSize() {
