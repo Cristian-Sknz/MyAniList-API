@@ -31,11 +31,13 @@ import me.skiincraft.mal.entity.list.ListStatus;
 
 public class MyAnimeList {
 	
-	private static final String SITE_URL = "https://myanimelist.net/";
+	public static final String SITE_URL = "https://myanimelist.net/";
 	private final MyAnimeList mal;
+	private final ExperimentalMethods experimentalMethods;
 	
 	public MyAnimeList() {
 		this.mal = this;
+		this.experimentalMethods = new ExperimentalMethods();
 	}
 	
 	public Request<Anime> getAnime(By by){
@@ -53,7 +55,7 @@ public class MyAnimeList {
 						}
 					} else {
 						try {
-							return anime = new AnimeImpl(Jsoup.connect(SITE_URL + "anime/" + ((long) by.get())).get(), mal);
+							return anime = new AnimeImpl(Jsoup.connect(SITE_URL + "anime/" + by.get()).get(), mal);
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
@@ -79,7 +81,7 @@ public class MyAnimeList {
 						}
 					} else {
 						try {
-							return manga = new MangaImpl(Jsoup.connect(SITE_URL + "manga/" + ((long) by.get())).get(), mal);
+							return manga = new MangaImpl(Jsoup.connect(SITE_URL + "manga/" + by.get()).get(), mal);
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
@@ -105,7 +107,7 @@ public class MyAnimeList {
 						}
 					} else {
 						try {
-							return character = new CharacterImpl(Jsoup.connect(SITE_URL + "character/" + ((long) by.get())).get(), mal);
+							return character = new CharacterImpl(Jsoup.connect(SITE_URL + "character/" + by.get()).get(), mal);
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
@@ -163,5 +165,9 @@ public class MyAnimeList {
 
 			}
 		};
+	}
+
+	public ExperimentalMethods getOtherMethods(){
+		return experimentalMethods;
 	}
 }
