@@ -36,13 +36,15 @@ public class AnimeUpdate {
 		private String name;
 		private long id;
 		private int episodes;
+		private String image;
 		private WatchingStatus status;
 		
 		private Request<Anime> anime;
 		
-		public UpdatedAnime(String name, long id, int episodes, WatchingStatus status, MyAnimeList mal) {
+		public UpdatedAnime(String name, long id, int episodes, String image, WatchingStatus status, MyAnimeList mal) {
 			this.name = name;
 			this.id = id;
+			this.image= image;
 			this.episodes = episodes;
 			this.status = status;
 			this.anime = mal.getAnime(By.id(id));
@@ -54,6 +56,10 @@ public class AnimeUpdate {
 
 		public long getId() {
 			return id;
+		}
+
+		public String getImage() {
+			return image;
 		}
 
 		public WatchingStatus getStatus() {

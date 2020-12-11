@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import me.skiincraft.mal.entity.people.WatchingStatus;
+import me.skiincraft.mal.util.ExtractElements;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -47,15 +48,20 @@ public class ProfileImpl implements Profile {
 	}
 
 	public AnimeUpdate getAnimeUpdates() {
-		Elements elements = document.getElementsByClass("updates anime").get(0).getElementsByClass("data");
-		UpdatedAnime[] animes = new UpdatedAnime[elements.size()];
+		Elements allelements = document.getElementsByClass("updates anime").get(0).getElementsByClass("statistics-updates di-b w100 mb8");
+		UpdatedAnime[] animes = new UpdatedAnime[allelements.size()];
 		int i = 0;
-		for (Element element: elements) {
-			Element e = element.selectFirst("a");
+		for (Element element: allelements) {
+			Element data = element.getElementsByClass("data").get(0);
+			Element e = data.selectFirst("a");
+
+			String image = element.selectFirst("img").attr("data-src");
+
 			UpdatedAnime anime = new UpdatedAnime(e.text(),
 					getId("/anime/", e.attr("href")),
-					Integer.parseInt((element.select("span").size() <= 2) ? "0" : element.select("span").get(2).text()),
-					containsStatus(element.text()),
+					Integer.parseInt((data.select("span").size() <= 2) ? "0" : data.select("span").get(2).text()),
+					ExtractElements.extractImage(image, ExtractElements.ANIME),
+					containsStatus(data.text()),
 					mal);
 
 			animes[i] = anime;
@@ -74,7 +80,7 @@ public class ProfileImpl implements Profile {
 	}
 
 	public MangaUpdate getMangaUpdates() {
-		Elements elements = document.getElementsByClass("updates manga").get(0).getElementsByClass("data");
+		/*Elements elements = document.getElementsByClass("updates manga").get(0).getElementsByClass("data");
 		UpdatedManga[] animes = new UpdatedManga[elements.size()];
 		int i = 0;
 		for (Element element: elements) {
@@ -87,6 +93,26 @@ public class ProfileImpl implements Profile {
 			i++;
 		}
 		return new MangaUpdate(animes);
+*/
+		Elements allelements = document.getElementsByClass("updates manga").get(0).getElementsByClass("statistics-updates di-b w100 mb8");
+		UpdatedManga[] mangas = new UpdatedManga[allelements.size()];
+		int i = 0;
+		for (Element element: allelements) {
+			Element data = element.getElementsByClass("data").get(0);
+			Element e = data.selectFirst("a");
+
+			String image = element.selectFirst("img").attr("data-src");
+
+			UpdatedManga manga = new UpdatedManga(e.text(),
+					getId("/manga/", e.attr("href")),
+					Integer.parseInt((element.select("span").size() <= 2) ? "0" : element.select("span").get(2).text()),
+					ExtractElements.extractImage(image, ExtractElements.MANGA),
+					mal);
+
+			mangas[i] = manga;
+			i++;
+		}
+		return new MangaUpdate(mangas);
 	}
 
 

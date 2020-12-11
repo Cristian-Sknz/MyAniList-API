@@ -10,24 +10,24 @@ import me.skiincraft.mal.util.By;
 
 public class MangaUpdate {
 	
-	private List<UpdatedManga> updatedAnimes;
+	private List<UpdatedManga> updatedMangas;
 	
 	public MangaUpdate(UpdatedManga... animes) {
-		updatedAnimes = new ArrayList<>(Arrays.asList(animes));
+		updatedMangas = new ArrayList<>(Arrays.asList(animes));
 	}
 	
-	public List<UpdatedManga> getUpdatedAnimes() {
-		return updatedAnimes;
+	public List<UpdatedManga> getUpdatedMangas() {
+		return updatedMangas;
 	}
 	
 	public int size() {
-		return updatedAnimes.size();
+		return updatedMangas.size();
 	}
 	
 	
 
 	public String toString() {
-		return "MangaUpdate [" + updatedAnimes + "]";
+		return "MangaUpdate [" + updatedMangas + "]";
 	}
 
 
@@ -37,14 +37,17 @@ public class MangaUpdate {
 		private String name;
 		private long id;
 		private int chapter;
+
+		private String image;
 		
 		private Request<Manga> manga;
 		
-		public UpdatedManga(String name, long id, int chapter, MyAnimeList mal) {
+		public UpdatedManga(String name, long id, int chapter, String image, MyAnimeList mal) {
 			this.name = name;
 			this.id = id;
 			this.chapter = chapter;
-			manga = mal.getManga(By.id(id));
+			this.image = image;
+			this.manga = mal.getManga(By.id(id));
 		}
 
 		public String getName() {
@@ -53,6 +56,10 @@ public class MangaUpdate {
 
 		public long getId() {
 			return id;
+		}
+
+		public String getImage() {
+			return image;
 		}
 
 		public int getEpisodes() {
