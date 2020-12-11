@@ -6,6 +6,7 @@ package me.skiincraft.mal.api;
  *
  * @param <T> Requested object
  */
+@FunctionalInterface
 public interface Request<T> {
 	
 	T get();
